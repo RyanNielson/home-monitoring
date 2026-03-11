@@ -13,8 +13,8 @@ ENPHASE_HOST     = ENV.fetch('ENPHASE_HOST')
 ENPHASE_TOKEN    = ENV.fetch('ENPHASE_TOKEN')
 INFLUXDB_URL     = ENV.fetch('INFLUXDB_URL', 'http://influxdb:8086')
 INFLUXDB_TOKEN   = ENV.fetch('INFLUXDB_TOKEN')
-INFLUXDB_ORG     = ENV.fetch('INFLUXDB_ORG', 'solar')
-INFLUXDB_BUCKET  = ENV.fetch('INFLUXDB_BUCKET', 'solar_metrics')
+INFLUXDB_ORG     = ENV.fetch('INFLUXDB_ORG', 'home')
+INFLUXDB_BUCKET  = ENV.fetch('INFLUXDB_BUCKET', 'home_metrics')
 COLLECT_INTERVAL = ENV.fetch('COLLECT_INTERVAL', '60').to_i
 
 def log(msg)

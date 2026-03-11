@@ -1,0 +1,16 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    csv (3.3.5)
+    influxdb-client (3.2.0)
+      csv
+
+PLATFORMS
+  aarch64-linux
+  ruby
+
+DEPENDENCIES
+  influxdb-client (~> 3.1)
+
+BUNDLED WITH
+   2.5.22

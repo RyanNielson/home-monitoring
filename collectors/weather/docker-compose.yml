@@ -1,9 +1,9 @@
-name: hm-solar
+name: hm-weather
 
 services:
-  solar-collector:
+  weather-collector:
     image: ruby:3.3-slim
-    container_name: hm-solar-collector
+    container_name: hm-weather-collector
     volumes:
       - .:/app
       - gem-cache:/usr/local/bundle
@@ -11,13 +11,13 @@ services:
     command: bash -c "bundle install --quiet && bundle exec ruby collect.rb"
     environment:
       BUNDLE_PATH: /usr/local/bundle
-      ENPHASE_HOST: ${ENPHASE_HOST}
-      ENPHASE_TOKEN: ${ENPHASE_TOKEN}
+      WEATHER_LATITUDE: ${WEATHER_LATITUDE}
+      WEATHER_LONGITUDE: ${WEATHER_LONGITUDE}
+      WEATHER_COLLECT_INTERVAL: ${WEATHER_COLLECT_INTERVAL:-300}
       INFLUXDB_URL: http://influxdb:8086
       INFLUXDB_TOKEN: ${INFLUXDB_TOKEN}
       INFLUXDB_ORG: ${INFLUXDB_ORG}
       INFLUXDB_BUCKET: ${INFLUXDB_BUCKET}
-      COLLECT_INTERVAL: ${COLLECT_INTERVAL}
     restart: unless-stopped
     networks:
       - monitoring
