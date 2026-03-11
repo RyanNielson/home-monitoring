@@ -41,7 +41,6 @@ rescue => e
   nil
 end
 
-
 def build_points(data)
   return [] unless data
 
