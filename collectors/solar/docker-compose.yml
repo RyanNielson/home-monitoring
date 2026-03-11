@@ -1,0 +1,32 @@
+name: hm-solar
+
+services:
+  solar-collector:
+    image: ruby:3.3-slim
+    container_name: hm-solar-collector
+    volumes:
+      - ./collect.rb:/app/collect.rb
+      - ./Gemfile:/app/Gemfile
+      - hm-gem-cache:/usr/local/bundle
+    working_dir: /app
+    command: bash -c "bundle install --quiet && bundle exec ruby collect.rb"
+    environment:
+      BUNDLE_PATH: /usr/local/bundle
+      ENPHASE_HOST: ${ENPHASE_HOST}
+      ENPHASE_TOKEN: ${ENPHASE_TOKEN}
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN}
+      INFLUXDB_ORG: ${INFLUXDB_ORG}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET}
+      COLLECT_INTERVAL: ${COLLECT_INTERVAL}
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+volumes:
+  hm-gem-cache:
+
+networks:
+  monitoring:
+    name: hm-monitoring
+    external: true

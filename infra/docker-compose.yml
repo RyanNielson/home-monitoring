@@ -1,12 +1,14 @@
+name: hm-infra
+
 services:
   influxdb:
     image: influxdb:2.7
-    container_name: solar-influxdb
+    container_name: hm-influxdb
     ports:
       - "8086:8086"
     volumes:
-      - influxdb-data:/var/lib/influxdb2
-      - influxdb-config:/etc/influxdb2
+      - hm-influxdb-data:/var/lib/influxdb2
+      - hm-influxdb-config:/etc/influxdb2
     environment:
       DOCKER_INFLUXDB_INIT_MODE: setup
       DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_ADMIN_USER}
@@ -20,14 +22,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+    networks:
+      - monitoring
 
   grafana:
     image: grafana/grafana:latest
-    container_name: solar-grafana
+    container_name: hm-grafana
     ports:
       - "3000:3000"
     volumes:
-      - grafana-data:/var/lib/grafana
+      - hm-grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
@@ -42,32 +46,14 @@ services:
       influxdb:
         condition: service_healthy
     restart: unless-stopped
-
-  collector:
-    image: ruby:3.3-slim
-    container_name: solar-collector
-    volumes:
-      - ./collector/collect.rb:/app/collect.rb
-      - ./collector/Gemfile:/app/Gemfile
-      - gem-cache:/usr/local/bundle
-    working_dir: /app
-    command: bash -c "bundle install --quiet && bundle exec ruby collect.rb"
-    environment:
-      BUNDLE_PATH: /usr/local/bundle
-      ENPHASE_HOST: ${ENPHASE_HOST}
-      ENPHASE_TOKEN: ${ENPHASE_TOKEN}
-      INFLUXDB_URL: http://influxdb:8086
-      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN}
-      INFLUXDB_ORG: ${INFLUXDB_ORG}
-      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET}
-      COLLECT_INTERVAL: ${COLLECT_INTERVAL}
-    depends_on:
-      influxdb:
-        condition: service_healthy
-    restart: unless-stopped
+    networks:
+      - monitoring
 
 volumes:
-  influxdb-data:
-  influxdb-config:
-  grafana-data:
-  gem-cache:
+  hm-influxdb-data:
+  hm-influxdb-config:
+  hm-grafana-data:
+
+networks:
+  monitoring:
+    name: hm-monitoring
