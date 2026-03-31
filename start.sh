@@ -13,4 +13,5 @@ for dir in collectors/*/; do
   fi
 done
 
-echo "Done. Grafana at http://localhost:3000"
+source .env
+echo "Done. Grafana at http://localhost:${GRAFANA_PORT:-3030}"
