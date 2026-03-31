@@ -28,6 +28,7 @@ Edit `.env` and fill in the required variables:
 | `INFLUXDB_ADMIN_PASSWORD` | No | InfluxDB admin password |
 | `INFLUXDB_ORG` | No | InfluxDB org (default: `home`) |
 | `INFLUXDB_BUCKET` | No | InfluxDB bucket (default: `home_metrics`) |
+| `GRAFANA_PORT` | No | Host port for Grafana (default: `3030`) |
 | `GRAFANA_ADMIN_USER` | No | Grafana admin username (default: `admin`) |
 | `GRAFANA_ADMIN_PASSWORD` | No | Grafana admin password (default: `admin`) |
 
@@ -68,7 +69,7 @@ docker logs -f hm-weather-collector
 
 ### 4. Open Grafana
 
-Visit **http://localhost:3000** (default credentials: admin / admin).
+Visit **http://localhost:3030** (or whatever you set `GRAFANA_PORT` to). Default credentials: admin / admin.
 
 Solar and weather dashboards are pre-loaded.
 
