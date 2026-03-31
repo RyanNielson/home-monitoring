@@ -1,12 +1,13 @@
-# Solar Monitor
+# Home Monitoring
 
-Enphase solar monitoring stack using Docker Compose. Collects data from your local Enphase IQ Gateway and displays it in a Grafana dashboard backed by InfluxDB.
+Home monitoring stack using Docker Compose. Collects solar production data from an Enphase IQ Gateway and weather data from Open-Meteo, then displays everything in Grafana dashboards backed by InfluxDB.
 
 ## Stack
 
-- **Ruby** — polls `production.json` from the Enphase gateway every 60s
 - **InfluxDB 2.x** — time-series storage
-- **Grafana** — pre-provisioned dashboard for production, consumption, and grid power
+- **Grafana** — pre-provisioned dashboards for solar and weather data
+- **Solar collector** (Ruby) — polls `production.json` from the Enphase gateway every 60s
+- **Weather collector** (Ruby) — polls the Open-Meteo API every 5 minutes
 
 ## Getting Started
 
@@ -16,42 +17,69 @@ Enphase solar monitoring stack using Docker Compose. Collects data from your loc
 cp .env.example .env
 ```
 
-Edit `.env` and fill in at minimum:
+Edit `.env` and fill in the required variables:
 
-| Variable | Description |
-|---|---|
-| `ENPHASE_TOKEN` | JWT token from https://entrez.enphaseenergy.com/tokens |
-| `INFLUXDB_TOKEN` | Run `openssl rand -hex 32` to generate one |
-| `ENPHASE_HOST` | Defaults to `envoy.local` — change to IP if mDNS doesn't resolve inside Docker |
+#### Infrastructure
 
-> **Note on `envoy.local`:** Docker containers on macOS can't resolve mDNS names. If the collector fails to reach the gateway, find the IP with `ping envoy.local` from your Mac and set `ENPHASE_HOST` to that IP in `.env`.
+| Variable | Required | Description |
+|---|---|---|
+| `INFLUXDB_TOKEN` | Yes | API token — generate with `openssl rand -hex 32` |
+| `INFLUXDB_ADMIN_USER` | No | InfluxDB admin username (default: `admin`) |
+| `INFLUXDB_ADMIN_PASSWORD` | No | InfluxDB admin password |
+| `INFLUXDB_ORG` | No | InfluxDB org (default: `home`) |
+| `INFLUXDB_BUCKET` | No | InfluxDB bucket (default: `home_metrics`) |
+| `GRAFANA_ADMIN_USER` | No | Grafana admin username (default: `admin`) |
+| `GRAFANA_ADMIN_PASSWORD` | No | Grafana admin password (default: `admin`) |
+
+#### Solar Collector
+
+| Variable | Required | Description |
+|---|---|---|
+| `SOLAR_ENPHASE_HOST` | Yes | IP address of your Enphase IQ Gateway |
+| `SOLAR_ENPHASE_TOKEN` | Yes | JWT token from https://entrez.enphaseenergy.com/tokens |
+| `SOLAR_COLLECT_INTERVAL` | No | Poll interval in seconds (default: `60`) |
+
+> **Note:** Docker containers cannot resolve mDNS (`.local`) hostnames. Find your gateway's IP with `ping envoy.local` from the host and use that for `SOLAR_ENPHASE_HOST`.
+
+#### Weather Collector
+
+| Variable | Required | Description |
+|---|---|---|
+| `WEATHER_LATITUDE` | Yes | Your location's latitude |
+| `WEATHER_LONGITUDE` | Yes | Your location's longitude |
+| `WEATHER_COLLECT_INTERVAL` | No | Poll interval in seconds (default: `300`) |
+
+Find your coordinates at https://open-meteo.com/en/docs.
 
 ### 2. Start
 
 ```bash
-docker compose up -d
+./start.sh
 ```
 
-On first start the collector will spend ~30–60 seconds installing the `influxdb-client` gem into a persistent cache volume. Subsequent restarts are instant.
+On first start each collector will spend ~30-60 seconds installing gems into a persistent cache volume. Subsequent restarts are instant.
 
 ### 3. View logs
 
 ```bash
-docker compose logs -f collector
+docker logs -f hm-solar-collector
+docker logs -f hm-weather-collector
 ```
 
 ### 4. Open Grafana
 
-Visit **http://localhost:3000** (default credentials: admin / admin)
+Visit **http://localhost:3000** (default credentials: admin / admin).
 
-The Solar dashboard is pre-loaded and refreshes every minute.
+Solar and weather dashboards are pre-loaded.
 
-## Dashboard Panels
+## Architecture
 
-- **Current Production** — live watts from your panels
-- **Current Consumption** — live whole-home consumption
-- **Grid Power** — net grid exchange (positive = exporting, negative = importing)
-- **Energy Today** — Wh produced today
-- **Power graph** — production, consumption, and grid over the selected time range
-- **Energy Last 7 Days / Lifetime** — cumulative energy stats
-- **Active Inverters** — count of reporting microinverters
+Two separate Docker Compose files share an external network (`hm-monitoring`):
+
+- **infra/** — InfluxDB + Grafana
+- **collectors/solar/** — Enphase gateway collector
+- **collectors/weather/** — Open-Meteo weather collector
+
+Collectors share common InfluxDB client setup via `collectors/shared/collector.rb`, mounted into each container.
+
+The `start.sh` script starts infra first (creates the network), then iterates `collectors/*/` to start each collector. `stop.sh` does the reverse.
