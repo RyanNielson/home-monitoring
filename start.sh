@@ -10,6 +10,9 @@ for dir in collectors/*/; do
   if [ -f "$dir/docker-compose.yml" ]; then
     echo "Starting $(basename "$dir")..."
     docker-compose --env-file .env -f "$dir/docker-compose.yml" up -d
+  elif [ -f "$dir/start.sh" ]; then
+    echo "Starting $(basename "$dir")..."
+    bash "$dir/start.sh"
   fi
 done
 

@@ -1,3 +1,5 @@
 .env
+.telegraf.pid
+logs/
 collectors/**/vendor/
 collectors/**/.bundle/
