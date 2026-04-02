@@ -57,8 +57,13 @@ rescue => e
   nil
 end
 
+SPEEDTEST_SERVER = ENV.fetch('NETWORK_SPEEDTEST_SERVER', '').strip
+
 def run_speedtest
-  output = `speedtest --format=json --accept-license --accept-gdpr 2>&1`
+  cmd = 'speedtest --format=json --accept-license --accept-gdpr'
+  cmd += " --server-id=#{SPEEDTEST_SERVER}" unless SPEEDTEST_SERVER.empty?
+
+  output = `#{cmd} 2>&1`
   return nil unless $?.success?
 
   # The first run prints a license notice before the JSON — find the JSON line.
@@ -110,7 +115,7 @@ def build_speedtest_point(data)
                   .add_field('upload_mbps', (data.dig('upload', 'bandwidth').to_f * 8 / 1_000_000).round(2))
                   .add_field('ping_ms', data.dig('ping', 'latency').to_f)
                   .add_field('jitter_ms', data.dig('ping', 'jitter').to_f)
-                  .add_tag('server', data.dig('server', 'name').to_s)
+                  .add_field('server', data.dig('server', 'name').to_s)
                   .time(Time.now.to_i, InfluxDB2::WritePrecision::SECOND)
 end
 
