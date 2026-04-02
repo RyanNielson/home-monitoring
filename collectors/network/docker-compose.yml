@@ -1,0 +1,41 @@
+name: hm-network
+
+services:
+  network-collector:
+    image: ruby:3.3-slim
+    container_name: hm-network-collector
+    volumes:
+      - .:/app
+      - ../shared:/app/shared
+      - gem-cache:/usr/local/bundle
+    working_dir: /app
+    command: >
+      bash -c "
+        apt-get update -qq && apt-get install -y -qq iputils-ping curl > /dev/null 2>&1 &&
+        curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | bash > /dev/null 2>&1 &&
+        apt-get install -y -qq speedtest > /dev/null 2>&1 &&
+        bundle install --quiet &&
+        bundle exec ruby collect.rb
+      "
+    environment:
+      BUNDLE_PATH: /usr/local/bundle
+      NETWORK_COLLECT_INTERVAL: ${NETWORK_COLLECT_INTERVAL:-60}
+      NETWORK_SPEEDTEST_INTERVAL: ${NETWORK_SPEEDTEST_INTERVAL:-3600}
+      NETWORK_PING_TARGETS: ${NETWORK_PING_TARGETS:-8.8.8.8,1.1.1.1}
+      NETWORK_DNS_TEST_HOST: ${NETWORK_DNS_TEST_HOST:-google.com}
+      NETWORK_HTTP_TEST_URL: ${NETWORK_HTTP_TEST_URL:-https://www.google.com}
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN}
+      INFLUXDB_ORG: ${INFLUXDB_ORG}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET}
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+volumes:
+  gem-cache:
+
+networks:
+  monitoring:
+    name: hm-monitoring
+    external: true
